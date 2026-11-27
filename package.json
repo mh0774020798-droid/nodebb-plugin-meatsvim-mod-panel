@@ -1,6 +1,6 @@
 {
   "name": "nodebb-plugin-meatsvim-mod-panel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A moderation panel for NodeBB staff: flags, post queue and bans in one place, with per-section group permissions. Built by מעצבים טופ (meatsvim.top).",
   "main": "library.js",
   "repository": {
