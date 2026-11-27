@@ -1,0 +1,40 @@
+{
+  "name": "nodebb-plugin-meatsvim-mod-panel",
+  "version": "1.0.0",
+  "description": "A moderation panel for NodeBB staff: flags, post queue and bans in one place, with per-section group permissions. Built by מעצבים טופ (meatsvim.top).",
+  "main": "library.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mh0774020798-droid/nodebb-plugin-meatsvim-mod-panel"
+  },
+  "homepage": "https://github.com/mh0774020798-droid/nodebb-plugin-meatsvim-mod-panel#readme",
+  "bugs": {
+    "url": "https://github.com/mh0774020798-droid/nodebb-plugin-meatsvim-mod-panel/issues"
+  },
+  "keywords": [
+    "nodebb",
+    "plugin",
+    "moderation",
+    "moderator",
+    "mod-panel",
+    "flags",
+    "post-queue",
+    "hebrew",
+    "rtl"
+  ],
+  "author": "מעצבים טופ (https://meatsvim.top)",
+  "license": "MIT",
+  "nbbpm": {
+    "compatibility": "^3.2.0 || ^4.0.0"
+  },
+  "files": [
+    "library.js",
+    "plugin.json",
+    "public",
+    "scss",
+    "templates",
+    "languages",
+    "README.md",
+    "LICENSE"
+  ]
+}

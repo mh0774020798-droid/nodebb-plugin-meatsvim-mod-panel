@@ -1,0 +1,22 @@
+{
+  "id": "nodebb-plugin-meatsvim-mod-panel",
+  "name": "Mod Panel (by מעצבים טופ)",
+  "description": "Moderation panel for staff: flags, post queue and bans, with per-section group permissions.",
+  "url": "https://github.com/mh0774020798-droid/nodebb-plugin-meatsvim-mod-panel",
+  "library": "./library.js",
+  "hooks": [
+    { "hook": "static:app.load", "method": "init" },
+    { "hook": "static:api.routes", "method": "addRoutes" },
+    { "hook": "filter:admin.header.build", "method": "addAdminNavigation" },
+    { "hook": "filter:navigation.available", "method": "addNavigation" },
+    { "hook": "filter:config.get", "method": "exposeConfig" }
+  ],
+  "templates": "templates",
+  "languages": "languages",
+  "defaultLang": "he",
+  "scss": ["scss/mod-panel.scss"],
+  "modules": {
+    "../client/mod-panel.js": "public/mod-panel.js",
+    "../admin/plugins/mod-panel.js": "public/admin.js"
+  }
+}
