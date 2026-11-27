@@ -28,8 +28,10 @@ const DEFAULTS = {
 	bansGroups: '',
 };
 const PAGE_SIZE = 20;
+const NAV_CACHE_TTL = 60000;
 
 const plugin = {};
+const navCache = new Map();
 
 // ---------------------------------------------------------------- settings
 async function getSettings() {
@@ -101,6 +103,36 @@ async function getAccess(uid) {
 
 	const allowed = SECTIONS.some(s => sections[s]);
 	return { uid, isAdmin, isGlobalMod, cids, sections, scope, allowed, settings };
+}
+
+/**
+ * Cheap check used on every page header: is this user allowed into the panel at all?
+ * Returns the settings object when allowed, otherwise null.
+ */
+async function canSeePanel(uid) {
+	uid = parseInt(uid, 10);
+	if (!uid || uid <= 0) {
+		return null;
+	}
+	const cached = navCache.get(uid);
+	if (cached && cached.expires > Date.now()) {
+		return cached.settings;
+	}
+
+	const settings = await getSettings();
+	const chosenGroups = SECTIONS
+		.map(section => parseGroups(settings[`${section}Groups`]))
+		.reduce((all, list) => all.concat(list), []);
+	const [isAdmin, isGlobalMod, isCategoryMod, membership] = await Promise.all([
+		user.isAdministrator(uid),
+		user.isGlobalModerator(uid),
+		user.isModeratorOfAnyCategory(uid),
+		chosenGroups.length ? groups.isMemberOfGroups(uid, chosenGroups) : Promise.resolve([]),
+	]);
+	const allowed = isAdmin || isGlobalMod || isCategoryMod || (Array.isArray(membership) && membership.some(Boolean));
+
+	navCache.set(uid, { settings: allowed ? settings : null, expires: Date.now() + NAV_CACHE_TTL });
+	return allowed ? settings : null;
 }
 
 async function requireSection(req, section) {
@@ -347,16 +379,48 @@ plugin.addAdminNavigation = async function (header) {
 	return header;
 };
 
+// Offered in ACP -> Extend -> Navigation, so the icon can also be added by hand
 plugin.addNavigation = async function (items) {
 	items.push({
 		route: '/mod-panel',
 		title: '[[mod-panel:title]]',
-		enabled: false,
+		enabled: true,
 		iconClass: 'fa-shield',
 		textClass: 'd-lg-none',
 		text: '[[mod-panel:title]]',
+		groups: [],
 	});
 	return items;
+};
+
+// Puts the icon in the header automatically for everyone who may open the panel
+plugin.addHeaderNavigation = async function (data) {
+	try {
+		const navigation = data && data.templateData && data.templateData.navigation;
+		if (!Array.isArray(navigation)) {
+			return data;
+		}
+		const route = `${nconf.get('relative_path')}/mod-panel`;
+		if (navigation.some(item => item && item.route === route)) {
+			return data;
+		}
+		const settings = await canSeePanel(data.req && data.req.uid);
+		if (!settings) {
+			return data;
+		}
+		const text = settings.title || '[[mod-panel:title]]';
+		navigation.push({
+			route,
+			title: text,
+			iconClass: 'fa-shield',
+			textClass: 'd-lg-none',
+			text,
+			groups: [],
+		});
+	} catch (err) {
+		winston.error(`[mod-panel] header navigation failed: ${err.stack}`);
+	}
+	return data;
 };
 
 plugin.exposeConfig = async function (config) {
