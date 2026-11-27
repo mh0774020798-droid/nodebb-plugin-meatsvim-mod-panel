@@ -25,10 +25,18 @@ jobs:
       - name: Publish to npm (trusted publishing - no token)
         run: npm publish
 
-      - name: Ask NodeBB to index the new version
+      - name: Ask NodeBB (nbbpm) to index the new version
         run: |
           NAME=$(node -p "require('./package.json').name")
           VERSION=$(node -p "require('./package.json').version")
           echo "Refreshing nbbpm index for $NAME@$VERSION"
-          sleep 20
-          curl -sS -X PUT "https://packages.nodebb.org/api/v1/plugins/$NAME" || true
+          for attempt in 1 2 3 4 5 6; do
+            sleep 20
+            curl -sS -X PUT "https://packages.nodebb.org/api/v1/plugins/$NAME" >/dev/null || true
+            LATEST=$(curl -sS "https://packages.nodebb.org/api/v1/plugins/$NAME" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{process.stdout.write(JSON.parse(s).payload.latest||"")}catch(e){}})') || LATEST=""
+            echo "attempt $attempt: nbbpm latest = $LATEST"
+            if [ "$LATEST" = "$VERSION" ]; then
+              echo "nbbpm now lists $VERSION"
+              break
+            fi
+          done
