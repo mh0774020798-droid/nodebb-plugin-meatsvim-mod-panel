@@ -9,6 +9,7 @@
     { "hook": "static:api.routes", "method": "addRoutes" },
     { "hook": "filter:admin.header.build", "method": "addAdminNavigation" },
     { "hook": "filter:navigation.available", "method": "addNavigation" },
+    { "hook": "filter:middleware.renderHeader", "method": "addHeaderNavigation" },
     { "hook": "filter:config.get", "method": "exposeConfig" }
   ],
   "templates": "templates",
