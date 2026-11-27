@@ -10,7 +10,7 @@
 
 	<div class="row m-0">
 		<div class="col-12 col-md-8 px-0 px-md-3 py-3">
-			<script type="application/json" id="mp-settings">{settingsJSON}</script>
+			<div id="mp-data" class="d-none" data-settings="{settingsJSON}" data-groups="{groupsJSON}"></div>
 
 			<div class="mb-4">
 				<h5 class="fw-bold tracking-tight settings-header">[[mod-panel:admin-look]]</h5>
@@ -34,14 +34,7 @@
 				{{{ each sections }}}
 				<div class="card mb-3">
 					<div class="card-header fw-semibold">[[mod-panel:tab-{./id}]]</div>
-					<div class="card-body d-flex flex-wrap gap-3" data-section="{./id}">
-						{{{ each ../groups }}}
-						<label class="form-check mb-0">
-							<input class="form-check-input" type="checkbox" value="{./name}">
-							<span class="form-check-label">{./name}</span>
-						</label>
-						{{{ end }}}
-					</div>
+					<div class="card-body d-flex flex-wrap gap-3" data-section="{./id}"></div>
 				</div>
 				{{{ end }}}
 			</div>

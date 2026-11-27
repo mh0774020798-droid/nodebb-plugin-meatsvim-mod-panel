@@ -140,7 +140,20 @@ async function listFlags(access, state, page) {
 		filters.cid = access.scope.flags;
 	}
 	const res = await flags.list({ filters, sort: 'newest', uid: access.uid, query: {} });
-	const items = (res.flags || []).map(f => ({
+	// the latest report reason of every flag
+	const reasons = await Promise.all((res.flags || []).map(async (f) => {
+		try {
+			if (typeof flags.getReports === 'function') {
+				const reports = await flags.getReports(f.flagId);
+				return reports && reports[0] ? reports[0].value : '';
+			}
+			const raw = await db.getSortedSetRevRange(`flag:${f.flagId}:reports`, 0, 0);
+			return raw && raw[0] ? String(raw[0]).split(';').slice(1).join(';') : '';
+		} catch (e) {
+			return '';
+		}
+	}));
+	const items = (res.flags || []).map((f, i) => ({
 		flagId: f.flagId,
 		type: f.type,
 		targetId: f.targetId,
@@ -150,7 +163,7 @@ async function listFlags(access, state, page) {
 		datetime: f.datetime,
 		datetimeISO: f.datetimeISO,
 		reporter: f.reporter ? { username: f.reporter.username, userslug: f.reporter.userslug } : null,
-		description: f.description || (Array.isArray(f.reports) && f.reports[0] ? f.reports[0].value : ''),
+		description: reasons[i] || f.description || '',
 	}));
 	return { items, page: res.page || filters.page, pageCount: res.pageCount || 1 };
 }
@@ -211,11 +224,12 @@ plugin.init = async function ({ router, middleware }) {
 
 	routeHelpers.setupAdminPageRoute(router, '/admin/plugins/mod-panel', async (req, res) => {
 		const names = await db.getSortedSetRange('groups:createtime', 0, -1);
-		const visible = (names || []).filter(name => name && !groups.isPrivilegeGroup(name) && !name.startsWith('cid:'));
+		const hiddenSystem = ['guests', 'spiders', 'banned-users', 'unverified-users'];
+		const visible = (names || []).filter(name => name && !groups.isPrivilegeGroup(name) && !name.startsWith('cid:') && !hiddenSystem.includes(name));
 		const settings = await getSettings();
 		res.render('admin/plugins/mod-panel', {
 			title: 'Mod Panel',
-			groups: visible.sort().map(name => ({ name })),
+			groupsJSON: JSON.stringify(visible.sort()),
 			settingsJSON: JSON.stringify(settings),
 			sections: SECTIONS.map(id => ({ id })),
 		});
@@ -230,7 +244,8 @@ plugin.addRoutes = async function ({ router, middleware, helpers }) {
 		try {
 			helpers.formatApiResponse(200, res, await fn(req));
 		} catch (err) {
-			helpers.formatApiResponse(err.status || 500, res, err);
+			const status = err.status || (/invalid|no-post/.test(String(err.message)) ? 400 : 500);
+			helpers.formatApiResponse(status, res, err);
 		}
 	};
 

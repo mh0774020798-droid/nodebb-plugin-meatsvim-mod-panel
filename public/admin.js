@@ -2,18 +2,46 @@
 
 /* Mod Panel — admin settings page. Built by מעצבים טופ (https://meatsvim.top) */
 
-define('admin/plugins/mod-panel', ['alerts'], function (alerts) {
+define('admin/plugins/mod-panel', ['alerts', 'translator'], function (alerts, translator) {
 	const Admin = {};
 	const SECTIONS = ['overview', 'flags', 'queue', 'bans'];
 	const DEFAULT_ACCENT = '#a67c2e';
 
 	Admin.init = function () {
+		const page = document.querySelector('.mod-panel-admin');
+		if (page && page.innerHTML.indexOf('[[mod-panel:') !== -1) {
+			// translate the static texts first (works on every NodeBB 3/4 version), then wire the form
+			return translator.translate(page.innerHTML, function (out) {
+				page.innerHTML = out;
+				setup();
+			});
+		}
+		setup();
+	};
+
+	function setup() {
 		let settings = {};
 		try {
-			settings = JSON.parse($('#mp-settings').text() || '{}');
+			settings = JSON.parse($('#mp-data').attr('data-settings') || '{}');
 		} catch (e) {
 			settings = {};
 		}
+
+		let groupNames = [];
+		try {
+			groupNames = JSON.parse($('#mp-data').attr('data-groups') || '[]');
+		} catch (e) {
+			groupNames = [];
+		}
+		SECTIONS.forEach(function (section) {
+			const $box = $('[data-section="' + section + '"]').empty();
+			groupNames.forEach(function (name) {
+				const $label = $('<label class="form-check mb-0"></label>');
+				$('<input class="form-check-input" type="checkbox">').val(name).appendTo($label);
+				$('<span class="form-check-label"></span>').text(name).appendTo($label);
+				$box.append($label);
+			});
+		});
 
 		$('#mp-title').val(settings.title || '');
 		$('#mp-accent').val(settings.accent || DEFAULT_ACCENT);
@@ -45,7 +73,7 @@ define('admin/plugins/mod-panel', ['alerts'], function (alerts) {
 				alerts.success('[[mod-panel:saved]]');
 			});
 		});
-	};
+	}
 
 	return Admin;
 });

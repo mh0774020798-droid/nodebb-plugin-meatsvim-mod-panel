@@ -160,8 +160,18 @@ define('forum/mod-panel', ['api', 'alerts', 'translator'], function (api, alerts
 		({ overview: overview, flags: flagsView, queue: queueView, bans: bansView }[section] || overview)();
 	}
 
+	// the static texts of the template are translated here, so it works on every NodeBB 3/4 version
+	function translateStatic() {
+		$root.find('.mp-hero, .mp-tabs, .mp-credit').each(function () {
+			const el = this;
+			if (el.innerHTML.indexOf('[[') === -1) { return; }
+			translator.translate(el.innerHTML, function (out) { el.innerHTML = out; });
+		});
+	}
+
 	ModPanel.init = function () {
 		$root = $('[data-mod-panel]');
+		translateStatic();
 		const first = $root.find('.mp-tab').first().attr('data-section') || 'overview';
 
 		$root.on('click', '.mp-tab', function () { show($(this).attr('data-section')); });
