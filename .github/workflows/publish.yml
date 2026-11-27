@@ -10,18 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org
 
-      - name: Publish to npm
+      - name: Use a recent npm (trusted publishing needs 11.5.1+)
+        run: npm install -g npm@^11.15.0 && npm --version
+
+      - name: Publish to npm (trusted publishing - no token)
         run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Ask NodeBB to index the new version
         run: |
