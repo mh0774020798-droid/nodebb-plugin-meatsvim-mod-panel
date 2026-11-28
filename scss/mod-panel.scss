@@ -4,7 +4,7 @@
 	--mp-accent: #a67c2e;
 	--mp-soft: color-mix(in srgb, var(--mp-accent) 12%, transparent);
 	--mp-line: color-mix(in srgb, var(--mp-accent) 30%, transparent);
-	max-width: 1100px;
+	max-width: 100%;
 	margin: 0 auto 2rem;
 
 	.mp-hero {
@@ -94,9 +94,12 @@
 
 	.mp-cards {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 12px;
 		margin-bottom: 18px;
+		@media (max-width: 767px) {
+			grid-template-columns: 1fr;
+		}
 	}
 	.mp-card {
 		border: 1px solid var(--mp-line);
